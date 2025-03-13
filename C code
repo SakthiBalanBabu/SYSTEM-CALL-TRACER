@@ -1,0 +1,39 @@
+#include <windows.h>
+#include <tchar.h>
+#include <stdio.h>
+
+int _tmain(int argc, _TCHAR* argv[]) {
+    if (argc < 2) {
+        _tprintf(_T("Usage: %s <program> [args]\n"), argv[0]);
+        return 1;
+    }
+
+    STARTUPINFO si;
+    PROCESS_INFORMATION pi;
+
+    ZeroMemory(&si, sizeof(si));
+    si.cb = sizeof(si);
+    ZeroMemory(&pi, sizeof(pi));
+
+    // Start the child process.
+    if (!CreateProcess(NULL, argv[1], NULL, NULL, FALSE, DEBUG_ONLY_THIS_PROCESS, NULL, NULL, &si, &pi)) {
+        _tprintf(_T("CreateProcess failed (%d).\n"), GetLastError());
+        return 1;
+    }
+
+    // Wait for the debug events.
+    DEBUG_EVENT debugEvent;
+    while (WaitForDebugEvent(&debugEvent, INFINITE)) {
+        // Process the debug event as needed.
+        // You can access system call information from debugEvent.u.Exception.ExceptionRecord.ExceptionCode.
+
+        // Continue the debug event.
+        ContinueDebugEvent(debugEvent.dwProcessId, debugEvent.dwThreadId, DBG_CONTINUE);
+    }
+
+    // Close process and thread handles.
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+
+    return 0;
+}
